@@ -1,40 +1,4 @@
-﻿/*
- *  ARTrackable.cs
- *  ARToolKit for Unity
- *
- *  This file is part of ARToolKit for Unity.
- *
- *  ARToolKit for Unity is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Lesser General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  ARToolKit for Unity is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License
- *  along with ARToolKit for Unity.  If not, see <http://www.gnu.org/licenses/>.
- *
- *  As a special exception, the copyright holders of this library give you
- *  permission to link this library with independent modules to produce an
- *  executable, regardless of the license terms of these independent modules, and to
- *  copy and distribute the resulting executable under terms of your choice,
- *  provided that you also meet, for each linked independent module, the terms and
- *  conditions of the license of that module. An independent module is a module
- *  which is neither derived from nor based on this library. If you modify this
- *  library, you may extend this exception to your version of the library, but you
- *  are not obligated to do so. If you do not wish to do so, delete this exception
- *  statement from your version.
- *
- *  Copyright 2015-2016 Daqri, LLC.
- *
- *  Author(s):  Philip Lamb, Julian Looser, Wally Young
- *
- */
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -445,6 +409,7 @@ public class ARTrackable : MonoBehaviour {
 		}
 	}
 
+// 關閉所有子物件
 	private void Start() {
 		if (Application.isPlaying) {
 			for (int i = 0; i < transform.childCount; ++i) {
@@ -465,9 +430,9 @@ public class ARTrackable : MonoBehaviour {
 	// 2 - Determine if visibility state is new.
 	// 3 - If visible, calculate marker pose.
 	// 4 - If visible, set marker pose.
-	// 5 - If visibility state is new, notify event receivers via "OnMarkerFound" or "OnMarkerLost".
+	// 5 - If visibility state is new, notify event receivers via "OnMarkerFound" or "OnMarkerLost". 通知找到標記或丟失標記
 	// 6 - If visibility state is new, set appropriate active state for marker children.
-	// 7 - If visible, notify event receivers that the marker's pose has been updated via "OnMarkerTracked".
+	// 7 - If visible, notify event receivers that the marker's pose has been updated via "OnMarkerTracked". 持續更新追蹤標記
 	protected virtual void LateUpdate() {
 		if (!Application.isPlaying) {
 			return;
@@ -492,7 +457,7 @@ public class ARTrackable : MonoBehaviour {
 
 			// 3 - If visible, calculate marker pose.
 			if (visible) {
-				// Scale the position from ARToolKit units (mm) into Unity units (m).
+				// Scale the position from ARToolKit units (mm) into Unity units (m).  轉換大小 現時mm到unity單位m
 				matrixRawArray[12] *= UNITY_TO_ARTOOLKIT;
 				matrixRawArray[13] *= UNITY_TO_ARTOOLKIT;
 				matrixRawArray[14] *= UNITY_TO_ARTOOLKIT;
@@ -502,9 +467,10 @@ public class ARTrackable : MonoBehaviour {
 				// up in direction of +y, and forward (towards viewer) in direction of +z.
 				// Need to convert to Unity's left-hand coordinate system where marker lies in x-y plane with right in direction of +x,
 				// up in direction of +y, and forward (towards viewer) in direction of -z.
+				// ＡＲ右手座標系 轉換至 unity座標系
 				transformationMatrix = ARUtilityFunctions.LHMatrixFromRHMatrix(matrixRaw);
 
-				// 4 - If visible, set marker pose.
+				// 4 - If visible, set marker pose. 計算相對於攝影機的ＡＲ物件transform
 				Matrix4x4 pose = ARStaticCamera.Instance.transform.localToWorldMatrix * transformationMatrix;
 				transform.position   = ARUtilityFunctions.PositionFromMatrix(pose);
 				transform.rotation   = ARUtilityFunctions.RotationFromMatrix(pose);
@@ -520,14 +486,15 @@ public class ARTrackable : MonoBehaviour {
 						eventReceivers.ForEach(x => x.OnMarkerLost(this));
 					}
 				}
-				// 6 - If visibility state is new, set appropriate active state for marker children.
+				// 6 - If visibility state is new, set appropriate active state for marker children.  更新子物件active狀態
 				for (int i = 0; i < transform.childCount; ++i) {
-					transform.GetChild(i).gameObject.SetActive(visible);
+					transform.GetChild(i).gameObject.SetActive(visible);   
 				}
 			}
 
             if (visible) {
                 // 7 - If visible, notify event receivers that the marker's pose has been updated via "OnMarkerTracked".
+                //更新子物件事件
                 if (null != eventReceivers && eventReceivers.Count > 0) {
                     eventReceivers.ForEach (x => x.OnMarkerTracked (this));
                 }
